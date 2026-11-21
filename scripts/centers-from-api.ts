@@ -98,15 +98,24 @@ async function getJson<T>(url: string, attempt = 0): Promise<T> {
 	return (await response.json()) as T;
 }
 
-/** Все карточки на языке: одним запросом (/centers/export), а у API без него — списком и по одной. */
+/**
+ * Все карточки на языке: одним запросом (/centers/export), а у API без него — списком по страницам (по 50: page,
+ * pages) и карточками по одной.
+ */
 async function fetchCards(lang: Lang): Promise<Card[]> {
 	const bulk = await fetch(`${API}/centers/export?lang=${lang}`, { headers: { Accept: "application/json" } });
 	if (bulk.ok) return ((await bulk.json()) as { data: Card[] }).data;
 	if (bulk.status !== 404) throw new Error(`${API}/centers/export → ${bulk.status}`);
 
-	const list = await getJson<{ data: Array<{ id: string }> }>(`${API}/centers?lang=${lang}`);
+	const ids: Array<{ id: string }> = [];
+	for (let page = 1; ; page++) {
+		const list = await getJson<{ data: Array<{ id: string }>; pages?: number }>(`${API}/centers?lang=${lang}&page=${page}`);
+		ids.push(...list.data);
+		// Без pages — прежний API: весь список одной страницей.
+		if (!list.pages || page >= list.pages || list.data.length === 0) break;
+	}
 	const cards: Card[] = [];
-	const queue = [...list.data];
+	const queue = [...ids];
 	await Promise.all(
 		Array.from({ length: 4 }, async () => {
 			for (let item = queue.shift(); item; item = queue.shift()) {
