@@ -99,8 +99,8 @@ async function getJson<T>(url: string, attempt = 0): Promise<T> {
 }
 
 /**
- * Все карточки на языке: одним запросом (/centers/export), а у API без него — списком по страницам (по 50: page,
- * pages) и карточками по одной.
+ * Все карточки на языке: одним запросом (/centers/export), а у API без него — списком порциями по курсору (до 50:
+ * cursor = nextCursor прошлой порции) и карточками по одной.
  */
 async function fetchCards(lang: Lang): Promise<Card[]> {
 	const bulk = await fetch(`${API}/centers/export?lang=${lang}`, { headers: { Accept: "application/json" } });
@@ -108,11 +108,13 @@ async function fetchCards(lang: Lang): Promise<Card[]> {
 	if (bulk.status !== 404) throw new Error(`${API}/centers/export → ${bulk.status}`);
 
 	const ids: Array<{ id: string }> = [];
-	for (let page = 1; ; page++) {
-		const list = await getJson<{ data: Array<{ id: string }>; pages?: number }>(`${API}/centers?lang=${lang}&page=${page}`);
+	for (let cursor: string | null = null; ; ) {
+		const query: string = cursor ? `&cursor=${encodeURIComponent(cursor)}` : "";
+		const list = await getJson<{ data: Array<{ id: string }>; nextCursor?: string | null }>(`${API}/centers?lang=${lang}${query}`);
 		ids.push(...list.data);
-		// Без pages — прежний API: весь список одной страницей.
-		if (!list.pages || page >= list.pages || list.data.length === 0) break;
+		// nextCursor: null — последняя порция; без поля — прежний API: весь список одним ответом.
+		if (!list.nextCursor || list.data.length === 0) break;
+		cursor = list.nextCursor;
 	}
 	const cards: Card[] = [];
 	const queue = [...ids];
