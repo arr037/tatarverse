@@ -22,6 +22,14 @@ export const config = {
   },
   /** Куда присылать исправления и дополнения к карточкам и переводам. */
   feedbackUrl: "https://t.me/the_tatarverse/8",
+  /**
+   * API каталога: центры (сборка берёт их отсюда, scripts/centers-from-api.ts), заявки «Добавить центр» и
+   * «Предложить правку», «Мои заявки». Описание — https://api.tatarverse.cc/docs/. Для разработки — своя копия:
+   * PUBLIC_TATARVERSE_API=http://localhost:5080/api/tatarverse.
+   */
+  api: {
+    url: ((import.meta.env?.PUBLIC_TATARVERSE_API as string | undefined) || "https://api.tatarverse.cc").replace(/\/+$/, ""),
+  },
   site: {
     url: siteUrl,
     language: "ru-RU",
@@ -143,5 +151,9 @@ export interface AppConfig {
     key: string;
   };
   feedbackUrl: string;
+  /** API каталога (api.tatarverse.cc): адрес без «/» в конце. */
+  api: {
+    url: string;
+  };
   site: SiteConfig;
 }

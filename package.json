@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "centers:sync": "bun scripts/centers-from-api.ts",
+    "build": "bun run centers:sync && astro build",
     "preview": "astro preview",
     "astro": "astro",
     "cf:preview": "bun run build && wrangler pages dev ./dist",

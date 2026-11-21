@@ -1,0 +1,249 @@
+---
+import { config } from "@/config";
+import { getLocaleFromUrl, localizePath, useTranslations } from "@/i18n";
+
+/**
+ * Форма заявки в API каталога: «Добавить центр», а с ?code=tbk-N — «Предложить правку» (поля заполнены из нынешней
+ * карточки). Справочники (народы, страны, роли, федеральные округа) и капча — из GET /config; логика —
+ * src/lib/client/submitForm.ts. Тексты сохраняются на языке страницы, остальные языки карточки не трогаются.
+ */
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const input =
+	"w-full min-w-0 rounded-control corner-squircle border border-border bg-surface px-3 py-2 text-sm text-surface-foreground outline-none transition placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent aria-[invalid=true]:border-destructive";
+const label = "flex min-w-0 flex-col gap-1.5 text-sm font-medium text-foreground";
+const section = "flex flex-col gap-4 rounded-catalog corner-squircle border border-border-muted bg-surface p-4 sm:p-6";
+const sectionTitle = "text-base font-semibold text-foreground";
+const error = "hidden text-xs font-normal text-destructive";
+
+/** Тексты для скрипта формы: заголовки правки, ошибки, готово. */
+const messages = Object.fromEntries(
+	[
+		"submit.titleEdit",
+		"submit.descriptionEdit",
+		"submit.closed",
+		"submit.unavailable",
+		"submit.notFound",
+		"submit.errors",
+		"submit.failed",
+		"submit.tooMany",
+		"submit.noChanges",
+		"submit.done",
+	].map((key) => [key, t(key)]),
+);
+---
+
+<div
+	data-submit-root
+	data-messages={JSON.stringify(messages)}
+	data-locale={locale}
+	data-centers-base={localizePath(locale, "/centers")}
+	data-my-url={localizePath(locale, "/my-submissions")}
+	data-api={config.api.url}
+	class="flex w-full min-w-0 flex-col gap-6"
+>
+	<p data-submit-status class="text-sm text-muted-foreground">{t("submit.loading")}</p>
+
+	<form data-submit-form hidden novalidate class="flex flex-col gap-6">
+		<p data-submit-errors role="alert" hidden class="rounded-control corner-squircle border border-destructive/40 bg-surface p-3 text-sm text-destructive"></p>
+
+		<section class={section}>
+			<h2 class={sectionTitle}>{t("submit.section.center")}</h2>
+			<label class={label} data-field="name">
+				{t("submit.name")} *
+				<input name="name" class={input} required maxlength="200" autocomplete="organization" />
+				<span data-error class={error}></span>
+			</label>
+			<label class={label} data-field="summary">
+				{t("submit.summary")}
+				<input name="summary" class={input} maxlength="200" />
+				<span data-error class={error}></span>
+			</label>
+			<label class={label} data-field="about">
+				{t("submit.about")}
+				<textarea name="about" class={input} rows="6" maxlength="5000"></textarea>
+				<span data-error class={error}></span>
+			</label>
+			<div class="grid gap-4 sm:grid-cols-2">
+				<label class={label} data-field="category">
+					{t("submit.category")} *
+					<select name="category" class={input} required data-options="categories">
+						<option value="">{t("submit.chooseCategory")}</option>
+					</select>
+					<span data-error class={error}></span>
+				</label>
+				<label class="flex items-center gap-2 self-end pb-2 text-sm text-foreground">
+					<input type="checkbox" name="online" class="size-4 accent-[var(--color-accent)]" />
+					{t("submit.online")}
+				</label>
+			</div>
+			<p class="text-xs text-subtle-foreground">{t("submit.translationNote")}</p>
+		</section>
+
+		<section class={section} data-place>
+			<h2 class={sectionTitle}>{t("submit.section.place")}</h2>
+			<div class="grid gap-4 sm:grid-cols-2">
+				<label class={label} data-field="country">
+					{t("submit.country")}
+					<select name="country" class={input} data-options="countries">
+						<option value="">{t("submit.chooseCountry")}</option>
+					</select>
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="city">
+					{t("submit.city")}
+					<input name="city" class={input} maxlength="100" autocomplete="address-level2" />
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="region">
+					{t("submit.region")}
+					<input name="region" class={input} maxlength="100" autocomplete="address-level1" />
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="district">
+					{t("submit.district")}
+					<input name="district" class={input} maxlength="100" />
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="federalDistrict" data-only-russia hidden>
+					{t("submit.federalDistrict")}
+					<select name="federalDistrict" class={input} data-options="federalDistricts">
+						<option value=""></option>
+					</select>
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="address">
+					{t("submit.address")}
+					<input name="address" class={input} maxlength="300" autocomplete="street-address" />
+					<span data-error class={error}></span>
+				</label>
+			</div>
+		</section>
+
+		<section class={section}>
+			<h2 class={sectionTitle}>{t("submit.section.contacts")}</h2>
+			<label class={label} data-field="links">
+				{t("submit.links")}
+				<textarea name="links" class={input} rows="3" placeholder="https://instagram.com/…"></textarea>
+				<span data-error class={error}></span>
+			</label>
+			<div class="grid gap-4 sm:grid-cols-2">
+				<label class={label} data-field="leader">
+					{t("submit.leader")}
+					<input name="leader" class={input} maxlength="100" />
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="phones">
+					{t("submit.phones")}
+					<textarea name="phones" class={input} rows="2" placeholder="+7 701 123 45 67"></textarea>
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="emails">
+					{t("submit.emails")}
+					<textarea name="emails" class={input} rows="2"></textarea>
+					<span data-error class={error}></span>
+				</label>
+			</div>
+		</section>
+
+		<section class={section}>
+			<h2 class={sectionTitle}>{t("submit.section.more")}</h2>
+			<label class={label} data-field="features">
+				{t("submit.features")}
+				<textarea name="features" class={input} rows="3"></textarea>
+				<span data-error class={error}></span>
+			</label>
+			<label class={label} data-field="sources">
+				{t("submit.sources")}
+				<textarea name="sources" class={input} rows="3" placeholder="https://…"></textarea>
+				<span data-error class={error}></span>
+			</label>
+			<div class="flex flex-col gap-2" data-field="logo" data-logo>
+				<span data-logo-label data-template={t("submit.logo", { size: "{size}" })} class="text-sm font-medium text-foreground"></span>
+				<img data-logo-current hidden alt="" class="size-20 rounded-control corner-squircle object-cover" />
+				<input type="file" name="logo" accept="image/*" class="text-sm text-muted-foreground" />
+				<label data-remove-logo hidden class="flex items-center gap-2 text-sm text-foreground">
+					<input type="checkbox" name="removeLogo" class="size-4" />
+					{t("submit.removeLogo")}
+				</label>
+				<span data-error class={error}></span>
+			</div>
+		</section>
+
+		<section class={section}>
+			<h2 class={sectionTitle}>{t("submit.section.you")}</h2>
+			<label class={label} data-field="submitterName">
+				{t("submit.submitterName")} *
+				<input name="submitterName" class={input} required maxlength="100" autocomplete="name" />
+				<span data-error class={error}></span>
+			</label>
+			<div class="grid gap-4 sm:grid-cols-3">
+				<label class={label} data-field="submitterPhone">
+					{t("submit.submitterPhone")}
+					<input name="submitterPhone" type="tel" class={input} autocomplete="tel" />
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="submitterTelegram">
+					{t("submit.submitterTelegram")}
+					<input name="submitterTelegram" class={input} placeholder="@" />
+					<span data-error class={error}></span>
+				</label>
+				<label class={label} data-field="submitterEmail">
+					{t("submit.submitterEmail")}
+					<input name="submitterEmail" type="email" class={input} autocomplete="email" />
+					<span data-error class={error}></span>
+				</label>
+			</div>
+			<p class="text-xs text-subtle-foreground" data-field="submitterContact">
+				{t("submit.contactHint")}
+				<span data-error class={error}></span>
+			</p>
+			<fieldset class="flex flex-col gap-2" data-field="role">
+				<legend class="mb-1.5 text-sm font-medium text-foreground">{t("submit.role")} *</legend>
+				<div data-options="roles" class="flex flex-col gap-1.5 text-sm text-foreground"></div>
+				<span data-error class={error}></span>
+			</fieldset>
+			<label class={label} data-field="comment">
+				{t("submit.comment")}
+				<textarea name="comment" class={input} rows="3" maxlength="1000"></textarea>
+				<span data-error class={error}></span>
+			</label>
+			{/* Ловушка для ботов: человек это поле не видит и не заполняет. */}
+			<input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="absolute -left-[9999px] size-px opacity-0" />
+		</section>
+
+		<div class="flex flex-col gap-3">
+			<div data-captcha></div>
+			<button
+				type="submit"
+				data-submit-button
+				class="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+				data-label={t("submit.send")}
+				data-busy={t("submit.sending")}
+			>
+				{t("submit.send")}
+			</button>
+			<p class="text-xs text-subtle-foreground">
+				{t("submit.captcha")}{" "}
+				<a class="underline" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy</a> ·
+				<a class="underline" href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms</a>
+			</p>
+		</div>
+	</form>
+
+	<section data-submit-done hidden class={section} aria-live="polite">
+		<h2 data-done-title class={sectionTitle}></h2>
+		<p class="text-sm text-muted-foreground">{t("submit.doneHint")}</p>
+		<div class="flex flex-wrap gap-3 text-sm">
+			<a class="font-medium underline" href={localizePath(locale, "/my-submissions")}>{t("nav.mySubmissions")}</a>
+			<a class="font-medium underline" href={localizePath(locale, "/centers/suggest")}>{t("submit.another")}</a>
+		</div>
+	</section>
+</div>
+
+<script>
+	import { initSubmitForm } from "@/lib/client/submitForm";
+
+	initSubmitForm();
+</script>

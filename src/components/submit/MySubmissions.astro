@@ -1,0 +1,51 @@
+---
+import { getLocaleFromUrl, localizePath, useTranslations } from "@/i18n";
+
+/**
+ * «Мои заявки»: заявки, отправленные с этого устройства (ключи — в localStorage браузера). Статус и причина
+ * отказа — из API каталога (POST /submissions/lookup), отозвать — DELETE /submissions/{id}. Логика —
+ * src/lib/client/mySubmissions.ts.
+ */
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+
+const messages = Object.fromEntries(
+	[
+		"my.kind.create",
+		"my.kind.edit",
+		"my.status.pending",
+		"my.status.approved",
+		"my.status.rejected",
+		"my.status.withdrawn",
+		"my.reason",
+		"my.open",
+		"my.withdraw",
+		"my.withdrawConfirm",
+		"my.forget",
+		"my.sent",
+		"my.changed",
+		"submit.unavailable",
+	].map((key) => [key, t(key)]),
+);
+---
+
+<div
+	data-my-root
+	data-locale={locale}
+	data-centers-base={localizePath(locale, "/centers")}
+	data-messages={JSON.stringify(messages)}
+	class="flex w-full min-w-0 flex-col gap-4"
+>
+	<p data-my-status class="text-sm text-muted-foreground"></p>
+	<div data-my-empty hidden class="flex flex-col items-start gap-3 rounded-catalog corner-squircle border border-border-muted bg-surface p-6 text-sm text-muted-foreground">
+		<p>{t("my.empty")}</p>
+		<a class="font-medium text-foreground underline" href={localizePath(locale, "/centers/suggest")}>{t("my.add")}</a>
+	</div>
+	<ul data-my-list class="flex flex-col gap-3"></ul>
+</div>
+
+<script>
+	import { initMySubmissions } from "@/lib/client/mySubmissions";
+
+	initMySubmissions();
+</script>

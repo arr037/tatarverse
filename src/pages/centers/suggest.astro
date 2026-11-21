@@ -1,0 +1,22 @@
+---
+import SubmitForm from "@/components/submit/SubmitForm.astro";
+import { getLocaleFromUrl, useTranslations } from "@/i18n";
+import Layout from "@/layouts/Layout.astro";
+
+/**
+ * «Добавить центр», а с ?code=tbk-N — «Предложить правку»: заявка уходит в API каталога (api.tatarverse.cc), её
+ * проверяет модератор. Страница одна на оба случая: сайт статический, а карточку для правки форма берёт из API.
+ */
+const locale = getLocaleFromUrl(Astro.url);
+const t = useTranslations(locale);
+---
+
+<Layout title={t("submit.titleNew")} description={t("submit.descriptionNew")} classContainer="max-w-3xl">
+	<div class="flex w-full min-w-0 flex-col gap-8">
+		<section class="flex min-w-0 flex-col gap-4">
+			<h1 data-submit-heading class="text-3xl font-bold tracking-[-0.03em] text-foreground sm:text-4xl">{t("submit.titleNew")}</h1>
+			<p data-submit-intro class="max-w-3xl text-base leading-7 text-muted-foreground">{t("submit.descriptionNew")}</p>
+		</section>
+		<SubmitForm />
+	</div>
+</Layout>

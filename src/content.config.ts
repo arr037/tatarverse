@@ -29,19 +29,21 @@ const CenterLocationSchema = z
 	})
 	.strict();
 
+/**
+ * Проверка места центра. Карточки приходят из API каталога (scripts/centers-from-api.ts): поля там уже проверены
+ * при модерации, а новое написание региона или новая страна из заявки не должны ронять сборку всего сайта. Поэтому
+ * не ошибка, а предупреждение в лог сборки: справочник (ruRegions, macroRegions) можно дополнить отдельно.
+ */
 function validateCenterLocation(
 	location: z.infer<typeof CenterLocationSchema> | undefined,
-	ctx: z.RefinementCtx,
+	_ctx: z.RefinementCtx,
 ) {
 	if (!location) return;
+	const warn = (key: string, message: string) => console.warn(`[centers] location.${key}: ${message}`);
 
 	for (const [key, value] of Object.entries(location)) {
 		if (typeof value === "string" && NO_DATA.test(value.trim())) {
-			ctx.addIssue({
-				code: "custom",
-				path: ["location", key],
-				message: `«${value}» - это заглушка, а не значение. Уберите поле целиком.`,
-			});
+			warn(key, `«${value}» - это заглушка, а не значение. Уберите поле в карточке через модерацию.`);
 		}
 	}
 
@@ -51,27 +53,21 @@ function validateCenterLocation(
 	if (country === RUSSIA) {
 		if (region && !normalizeRuRegion(region)) {
 			const hint = suggestRuRegion(region);
-			ctx.addIssue({
-				code: "custom",
-				path: ["location", "region"],
-				message:
-					`«${region}» не найден в справочнике субъектов РФ ` +
-					`(src/data/geo/ruRegions.ts)` +
+			warn(
+				"region",
+				`«${region}» не найден в справочнике субъектов РФ (src/data/geo/ruRegions.ts)` +
 					(hint ? `. Похоже на «${hint}»` : "") +
 					`. Добавьте написание в aliases нужного субъекта или исправьте карточку.`,
-			});
+			);
 		}
 		return;
 	}
 
 	if (!getMacroRegion(country)) {
-		ctx.addIssue({
-			code: "custom",
-			path: ["location", "country"],
-			message:
-				`страна «${country}» не отнесена ни к одному макрорегиону ` +
-				`(src/data/geo/macroRegions.ts) - без этого она не попадёт в фильтры.`,
-		});
+		warn(
+			"country",
+			`страна «${country}» не отнесена ни к одному макрорегиону (src/data/geo/macroRegions.ts) - без этого она не попадёт в фильтры.`,
+		);
 	}
 }
 

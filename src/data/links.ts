@@ -20,6 +20,15 @@ export const links: Link[] = [
 		variant: "default",
 	},
 	{
+		label: "Добавить центр",
+		labelKey: "nav.addCenter",
+		icon: "mdi:plus",
+		class: "sm:px-4 sm:py-2 py-1.5 px-3 text-sm",
+		href: "/centers/suggest",
+		size: "default",
+		variant: "outline",
+	},
+	{
 		label: "Статистика",
 		labelKey: "nav.stats",
 		icon: "mdi:chart-box-outline",

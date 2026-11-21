@@ -1,7 +1,7 @@
 ---
 import { config } from "@/config";
 import ButtonLink from "@/components/ui/ButtonLink.astro";
-import { getLocaleFromUrl, useTranslations } from "@/i18n";
+import { getLocaleFromUrl, localizePath, useTranslations } from "@/i18n";
 import type { CenterCompleteness } from "@/lib/center/completeness";
 import { Icon } from "astro-icon/components";
 
@@ -28,6 +28,8 @@ const cardUrl = new URL(Astro.url.pathname, config.site.url).href;
 const message = t("detail.status.message", { id: centerId, title: centerTitle, url: cardUrl });
 const telegramUrl = `https://t.me/mirikhan1?text=${encodeURIComponent(message)}`;
 const whatsappUrl = `https://wa.me/79172975109?text=${encodeURIComponent(message)}`;
+/** «Предложить правку» — форма заявки через API каталога с этой карточкой внутри. */
+const suggestUrl = `${localizePath(locale, "/centers/suggest")}?code=${encodeURIComponent(centerId)}`;
 
 /*
  * Кнопки мессенджеров - та же акцентная схема (btn-gradient), что у
@@ -44,13 +46,16 @@ const gaps = completeness.gaps.map((gap) => t(`detail.gap.${gap}`)).join(", ");
 
 {
 	completeness.complete ? (
-		<p class:list={["not-prose flex items-start justify-center gap-2 text-sm", className]}>
-			<Icon name="tabler:circle-check" class="mt-0.5 size-4 shrink-0 text-foreground" aria-hidden="true" />
-			<span>
-				<span class="block font-medium text-foreground">{t("detail.status.complete")}</span>
-				<span class="block text-xs text-subtle-foreground">{t("detail.status.completeHint")}</span>
-			</span>
-		</p>
+		<div class:list={["not-prose flex flex-col items-center gap-3 text-sm", className]}>
+			<p class="flex items-start justify-center gap-2">
+				<Icon name="tabler:circle-check" class="mt-0.5 size-4 shrink-0 text-foreground" aria-hidden="true" />
+				<span>
+					<span class="block font-medium text-foreground">{t("detail.status.complete")}</span>
+					<span class="block text-xs text-subtle-foreground">{t("detail.status.completeHint")}</span>
+				</span>
+			</p>
+			<ButtonLink href={suggestUrl} variant="outline" size="xs" icon="tabler:pencil" label={t("detail.status.suggest")} />
+		</div>
 	) : (
 		<section
 			class:list={["not-prose field-well rounded-catalog corner-squircle p-1.5 text-sm", className]}
@@ -68,6 +73,8 @@ const gaps = completeness.gaps.map((gap) => t(`detail.gap.${gap}`)).join(", ");
 					<p class="text-subtle-foreground">{t("detail.status.help")}</p>
 				</div>
 				<div class="flex shrink-0 flex-wrap gap-2">
+					{/* Правка через API каталога: заявку проверит модератор. Мессенджеры — запасной путь. */}
+					<ButtonLink href={suggestUrl} variant="gradient" size="xs" icon="tabler:pencil" label={t("detail.status.suggest")} />
 					<ButtonLink
 						href="https://t.me/the_tatarverse/57"
 						target="_blank"
